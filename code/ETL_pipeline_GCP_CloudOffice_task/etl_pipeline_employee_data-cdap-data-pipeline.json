@@ -1,0 +1,172 @@
+{
+    "name": "etl_pipeline_employee_data",
+    "description": "Data Pipeline Application",
+    "artifact": {
+        "name": "cdap-data-pipeline",
+        "version": "6.11.1",
+        "scope": "SYSTEM"
+    },
+    "config": {
+        "resources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "driverResources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "connections": [
+            {
+                "from": "GCSFile",
+                "to": "Wrangler"
+            },
+            {
+                "from": "Wrangler",
+                "to": "BigQuery"
+            }
+        ],
+        "postActions": [],
+        "properties": {},
+        "processTimingEnabled": true,
+        "stageLoggingEnabled": true,
+        "stages": [
+            {
+                "name": "GCSFile",
+                "plugin": {
+                    "name": "GCSFile",
+                    "type": "batchsource",
+                    "label": "GCSFile",
+                    "artifact": {
+                        "name": "google-cloud",
+                        "version": "0.24.1",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "path": "gs://kw-employee-data/datasets/employee_data.csv",
+                        "fileEncoding": "UTF-8",
+                        "useConnection": "true",
+                        "format": "csv",
+                        "enableQuotedValues": "true",
+                        "connection": "${conn(Cloud Storage Default)}",
+                        "skipHeader": "true",
+                        "referenceName": "kw-employee-data.datasetsemployee_data.csv",
+                        "schema": "{\"type\":\"record\",\"name\":\"text\",\"fields\":[{\"name\":\"employee_id\",\"type\":\"string\"},{\"name\":\"first_name\",\"type\":\"string\"},{\"name\":\"last_name\",\"type\":\"string\"},{\"name\":\"job_title\",\"type\":\"string\"},{\"name\":\"department\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"phone_number\",\"type\":\"string\"},{\"name\":\"salary\",\"type\":\"string\"},{\"name\":\"password\",\"type\":\"string\"}]}"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"text\",\"fields\":[{\"name\":\"employee_id\",\"type\":\"string\"},{\"name\":\"first_name\",\"type\":\"string\"},{\"name\":\"last_name\",\"type\":\"string\"},{\"name\":\"job_title\",\"type\":\"string\"},{\"name\":\"department\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"phone_number\",\"type\":\"string\"},{\"name\":\"salary\",\"type\":\"string\"},{\"name\":\"password\",\"type\":\"string\"}]}",
+                "id": "GCSFile",
+                "type": "batchsource",
+                "label": "GCSFile",
+                "icon": "fa-plug",
+                "$$hashKey": "object:32",
+                "isPluginAvailable": true,
+                "_uiPosition": {
+                    "left": "560px",
+                    "top": "340.5px"
+                }
+            },
+            {
+                "name": "Wrangler",
+                "plugin": {
+                    "name": "Wrangler",
+                    "type": "transform",
+                    "label": "Wrangler",
+                    "artifact": {
+                        "name": "wrangler-transform",
+                        "version": "4.11.1",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "directives": "merge :first_name :last_name :Full Name ,\nrename Full Full_Name\nmask-number :salary xxxxxx\nhash :password MD5 true",
+                        "field": "*",
+                        "precondition": "false",
+                        "workspaceId": "0c77eeb3-d506-4a84-a370-1882f3cd94a1",
+                        "schema": "{\"type\":\"record\",\"name\":\"output\",\"fields\":[{\"name\":\"employee_id\",\"type\":[\"string\",\"null\"]},{\"name\":\"first_name\",\"type\":[\"string\",\"null\"]},{\"name\":\"last_name\",\"type\":[\"string\",\"null\"]},{\"name\":\"job_title\",\"type\":[\"string\",\"null\"]},{\"name\":\"department\",\"type\":[\"string\",\"null\"]},{\"name\":\"email\",\"type\":[\"string\",\"null\"]},{\"name\":\"address\",\"type\":[\"string\",\"null\"]},{\"name\":\"country\",\"type\":[\"string\",\"null\"]},{\"name\":\"phone_number\",\"type\":[\"string\",\"null\"]},{\"name\":\"salary\",\"type\":[\"string\",\"null\"]},{\"name\":\"password\",\"type\":[\"string\",\"null\"]},{\"name\":\"Full_Name\",\"type\":[\"string\",\"null\"]}]}"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"output\",\"fields\":[{\"name\":\"employee_id\",\"type\":[\"string\",\"null\"]},{\"name\":\"first_name\",\"type\":[\"string\",\"null\"]},{\"name\":\"last_name\",\"type\":[\"string\",\"null\"]},{\"name\":\"job_title\",\"type\":[\"string\",\"null\"]},{\"name\":\"department\",\"type\":[\"string\",\"null\"]},{\"name\":\"email\",\"type\":[\"string\",\"null\"]},{\"name\":\"address\",\"type\":[\"string\",\"null\"]},{\"name\":\"country\",\"type\":[\"string\",\"null\"]},{\"name\":\"phone_number\",\"type\":[\"string\",\"null\"]},{\"name\":\"salary\",\"type\":[\"string\",\"null\"]},{\"name\":\"password\",\"type\":[\"string\",\"null\"]},{\"name\":\"Full_Name\",\"type\":[\"string\",\"null\"]}]}"
+                    }
+                ],
+                "id": "Wrangler",
+                "type": "transform",
+                "label": "Wrangler",
+                "icon": "icon-DataPreparation",
+                "$$hashKey": "object:33",
+                "isPluginAvailable": true,
+                "_uiPosition": {
+                    "left": "860px",
+                    "top": "340.5px"
+                }
+            },
+            {
+                "name": "BigQuery",
+                "plugin": {
+                    "name": "BigQueryTable",
+                    "type": "batchsink",
+                    "label": "BigQuery",
+                    "artifact": {
+                        "name": "google-cloud",
+                        "version": "0.24.1",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "useConnection": "false",
+                        "project": "auto-detect",
+                        "datasetProject": "sodium-cat-445016-b2",
+                        "serviceAccountType": "filePath",
+                        "serviceFilePath": "auto-detect",
+                        "referenceName": "bq_data_load",
+                        "dataset": "employee_data",
+                        "table": "emp_data",
+                        "operation": "insert",
+                        "truncateTable": "false",
+                        "allowSchemaRelaxation": "false",
+                        "readTimeout": "120",
+                        "location": "US",
+                        "createPartitionedTable": "false",
+                        "partitioningType": "TIME",
+                        "timePartitioningType": "DAY",
+                        "partitionFilterRequired": "false",
+                        "schema": "{\"type\":\"record\",\"name\":\"output\",\"fields\":[{\"name\":\"employee_id\",\"type\":[\"string\",\"null\"]},{\"name\":\"first_name\",\"type\":[\"string\",\"null\"]},{\"name\":\"last_name\",\"type\":[\"string\",\"null\"]},{\"name\":\"job_title\",\"type\":[\"string\",\"null\"]},{\"name\":\"department\",\"type\":[\"string\",\"null\"]},{\"name\":\"email\",\"type\":[\"string\",\"null\"]},{\"name\":\"address\",\"type\":[\"string\",\"null\"]},{\"name\":\"country\",\"type\":[\"string\",\"null\"]},{\"name\":\"phone_number\",\"type\":[\"string\",\"null\"]},{\"name\":\"salary\",\"type\":[\"string\",\"null\"]},{\"name\":\"password\",\"type\":[\"string\",\"null\"]},{\"name\":\"Full_Name\",\"type\":[\"string\",\"null\"]}]}"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"output\",\"fields\":[{\"name\":\"employee_id\",\"type\":[\"string\",\"null\"]},{\"name\":\"first_name\",\"type\":[\"string\",\"null\"]},{\"name\":\"last_name\",\"type\":[\"string\",\"null\"]},{\"name\":\"job_title\",\"type\":[\"string\",\"null\"]},{\"name\":\"department\",\"type\":[\"string\",\"null\"]},{\"name\":\"email\",\"type\":[\"string\",\"null\"]},{\"name\":\"address\",\"type\":[\"string\",\"null\"]},{\"name\":\"country\",\"type\":[\"string\",\"null\"]},{\"name\":\"phone_number\",\"type\":[\"string\",\"null\"]},{\"name\":\"salary\",\"type\":[\"string\",\"null\"]},{\"name\":\"password\",\"type\":[\"string\",\"null\"]},{\"name\":\"Full_Name\",\"type\":[\"string\",\"null\"]}]}"
+                    }
+                ],
+                "inputSchema": [
+                    {
+                        "name": "Wrangler",
+                        "schema": "{\"type\":\"record\",\"name\":\"output\",\"fields\":[{\"name\":\"employee_id\",\"type\":[\"string\",\"null\"]},{\"name\":\"first_name\",\"type\":[\"string\",\"null\"]},{\"name\":\"last_name\",\"type\":[\"string\",\"null\"]},{\"name\":\"job_title\",\"type\":[\"string\",\"null\"]},{\"name\":\"department\",\"type\":[\"string\",\"null\"]},{\"name\":\"email\",\"type\":[\"string\",\"null\"]},{\"name\":\"address\",\"type\":[\"string\",\"null\"]},{\"name\":\"country\",\"type\":[\"string\",\"null\"]},{\"name\":\"phone_number\",\"type\":[\"string\",\"null\"]},{\"name\":\"salary\",\"type\":[\"string\",\"null\"]},{\"name\":\"password\",\"type\":[\"string\",\"null\"]},{\"name\":\"Full_Name\",\"type\":[\"string\",\"null\"]}]}"
+                    }
+                ],
+                "id": "BigQuery",
+                "type": "batchsink",
+                "label": "BigQuery",
+                "icon": "fa-plug",
+                "$$hashKey": "object:34",
+                "isPluginAvailable": true,
+                "_uiPosition": {
+                    "left": "1160px",
+                    "top": "340.5px"
+                }
+            }
+        ],
+        "schedule": "0 1 */1 * *",
+        "engine": "spark",
+        "numOfRecordsPreview": 100,
+        "rangeRecordsPreview": {
+            "min": 1,
+            "max": "5000"
+        },
+        "maxConcurrentRuns": 1,
+        "pushdownEnabled": false,
+        "transformationPushdown": {}
+    },
+    "version": "12f23431-aed7-11f0-b9db-d2da85f88c32"
+}
